@@ -1,31 +1,39 @@
-import { useState, useEffect, useContext, FunctionComponent } from "react";
-import { RouteComponentProps } from "react-router";
-import ThemeContext from "./ThemeContext";
+import { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import useBreedList from "./useBreedList";
 import Results from "./Results";
-import { PetAPIResponse, Animal, Pet } from "./APIResponseTypes";
+import changeLocation from "./actionCreaters/changeLocation";
+import changeAnimal from "./actionCreaters/changeAnimal";
+import changeBreed from "./actionCreaters/changeBreed";
+import changeTheme from "./actionCreaters/changeTheme";
 
-const ANIMALS: Animal[] = ["bird", "cat", "dog", "rabbit", "reptile"];
+const ANIMALS = ["bird", "cat", "dog", "rabbit", "reptile"];
 
-const SearchParams: FunctionComponent = () => {
-  const [animal, updateAnimal] = useState("" as Animal);
-  const [location, updateLocation] = useState("");
-  const [breed, updateBreed] = useState("");
-  const [pets, setPets] = useState([] as Pet[]);
+const SearchParams = () => {
+  const animal = useSelector((state) => state.animal);
+  const location = useSelector((state) => state.location);
+  const breed = useSelector((state) => state.breed);
+  const theme = useSelector((state) => state.theme);
+  const [pets, setPets] = useState([]);
   const [breeds] = useBreedList(animal);
-  const [theme, setTheme] = useContext(ThemeContext);
+  const dispatch = useDispatch();
 
   useEffect(() => {
-    void requestPets();
+    requestPets();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function requestPets() {
     const res = await fetch(
       `http://pets-v2.dev-apis.com/pets?animal=${animal}&location=${location}&breed=${breed}`
     );
-    const json = (await res.json()) as PetAPIResponse;
+    const json = await res.json();
 
     setPets(json.pets);
+  }
+
+  function handleAnimalChange(e) {
+    dispatch(changeBreed(""));
+    dispatch(changeAnimal(e.target.value));
   }
 
   return (
@@ -33,7 +41,7 @@ const SearchParams: FunctionComponent = () => {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          void requestPets();
+          requestPets();
         }}
       >
         <label htmlFor="location">
@@ -42,7 +50,7 @@ const SearchParams: FunctionComponent = () => {
             id="location"
             value={location}
             placeholder="Location"
-            onChange={(e) => updateLocation(e.target.value)}
+            onChange={(e) => dispatch(changeLocation(e.target.value))}
           />
         </label>
         <label htmlFor="animal">
@@ -50,8 +58,8 @@ const SearchParams: FunctionComponent = () => {
           <select
             id="animal"
             value={animal}
-            onChange={(e) => updateAnimal(e.target.value as Animal)}
-            onBlur={(e) => updateAnimal(e.target.value as Animal)}
+            onChange={handleAnimalChange}
+            onBlur={(e) => dispatch(changeAnimal(e.target.value))}
           >
             <option />
             {ANIMALS.map((animal) => (
@@ -67,8 +75,8 @@ const SearchParams: FunctionComponent = () => {
             disabled={!breeds.length}
             id="breed"
             value={breed}
-            onChange={(e) => updateBreed(e.target.value)}
-            onBlur={(e) => updateBreed(e.target.value)}
+            onChange={(e) => dispatch(changeBreed(e.target.value))}
+            onBlur={(e) => dispatch(changeBreed(e.target.value))}
           >
             <option />
             {breeds.map((breed) => (
@@ -82,8 +90,8 @@ const SearchParams: FunctionComponent = () => {
           Theme
           <select
             value={theme}
-            onChange={(e) => setTheme(e.target.value)}
-            onBlur={(e) => setTheme(e.target.value)}
+            onChange={(e) => dispatch(changeTheme(e.target.value))}
+            onBlur={(e) => dispatch(changeTheme(e.target.value))}
           >
             <option value="peru">Peru</option>
             <option value="darkblue">Dark Blue</option>
